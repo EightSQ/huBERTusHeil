@@ -4,8 +4,8 @@
 
 > [Hubertus Heil](https://en.wikipedia.org/wiki/Hubertus_Heil) is a german politician and currently serving as Federal Minister of Labour and Social Affairs.
 
-**Leon Schiller**, *Hasso-Plattner-Institute, University of Potsdam*<br/>
-**Georg Ortwin Otto Kißig**, *Hasso-Plattner-Institute, University of Potsdam*
+**Leon Schiller**, *Hasso Plattner Institute, University of Potsdam*<br/>
+**Georg Ortwin Otto Kißig**, *Hasso Plattner Institute, University of Potsdam*
 
 
 Please find this document (which is more readable in the browser) and our source code [here](https://github.com/EightSQ/huBERTusHeil).
