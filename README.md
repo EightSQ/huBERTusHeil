@@ -4,7 +4,7 @@
 
 > [Hubertus Heil](https://en.wikipedia.org/wiki/Hubertus_Heil) is a german politician and currently serving as Federal Minister of Labour and Social Affairs.
 
-**Leon Schiller**, *Hasso-Plattner-Institute, University of Potsdam*
+**Leon Schiller**, *Hasso-Plattner-Institute, University of Potsdam*<br/>
 **Georg Ortwin Otto Kißig**, *Hasso-Plattner-Institute, University of Potsdam*
 
 
@@ -192,7 +192,7 @@ And finally, the "political left-to-right spectrum" has once again been matched 
 
 We used the MUSE Sentence Encoder (from [here](https://tfhub.dev/google/universal-sentence-encoder-multilingual/3)) to map the TOPs to a vector representation. Then we can find the <img src="https://render.githubusercontent.com/render/math?math=k"> nearest neighbors of them given a user input. This is done using cosine similarity. Here are some examples of which TOPs are retrieved for a given user input:
 
-User Input: **Ecological Agriculture**
+User Input: **Ecological Agriculture**<br/>
 Raw german results (TOPs) for <img src="https://render.githubusercontent.com/render/math?math=k = 10">:
 - Gesellschaftlichen Zusammenhalt stärken – Gutes Leben und Arbeiten auf dem Land gewährleisten Smart Farming – Flächendeckende Breitbandversorgung für eine innovative Landwirtschaft in Deutschland
 - hier: Einzelplan 10 Bundesministerium für Ernährung und Landwirtschaft
@@ -243,7 +243,7 @@ In our notebook `huBERTusHeil.ipynb`, we also built an interface for direct clas
 
 A prime example for an error we have seen oftentimes when experimenting with that is the following.
 
-Query: **"Wir sollten sozial Schwache künftig deutlich stärker besteuern."** ("We should tax the poor much more in the future.")
+Query: **"Wir sollten sozial Schwache künftig deutlich stärker besteuern."** ("We should tax the poor much more in the future.")<br/>
 Answer:
 
 ![](https://i.imgur.com/CP0RALy.png)
@@ -254,12 +254,12 @@ This error shows us, that the model not really learned to fully understand the c
 
 Another example shows, that contradictory statements can lead to the exact same decision.
 
-Query: **Wir brauchen ein generelles Tempolimit auf den Autobahnen.** ("We need a general speed limit on highways.")
+Query: **Wir brauchen ein generelles Tempolimit auf den Autobahnen.** ("We need a general speed limit on highways.")<br/>
 Answer:
 
 ![](https://i.imgur.com/Uw0iCiY.png)
 
-Query: **Wir brauchen kein generelles Tempolimit auf den Autobahnen.** ("We need a general speed limit on highways.")
+Query: **Wir brauchen kein generelles Tempolimit auf den Autobahnen.** ("We need a general speed limit on highways.")<br/>
 Answer:
 
 ![](https://i.imgur.com/oDndfY9.png)
@@ -268,7 +268,7 @@ Answer:
 If we insert another word, however, that does not even change the meaning of the query, we can get another decision.
 
 
-Query: **Wir brauchen kein generelles Tempolimit auf den deutschen Autobahnen.** ("We don't need a general speed limit on the german highways.")
+Query: **Wir brauchen kein generelles Tempolimit auf den deutschen Autobahnen.** ("We don't need a general speed limit on the german highways.")<br/>
 Answer:
 
 ![](https://i.imgur.com/sgAW4hg.png)
