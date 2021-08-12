@@ -29,7 +29,7 @@ Thus, our goals are:
 The federal german pariliament (Bundestag) [publishes](https://www.bundestag.de/services/opendata) protocols of its sessions as part of an open data initiative. Beginning with the current term, these are also offered in a [machine-readable XML format](https://www.bundestag.de/resource/blob/577234/f9159cee3e045cbc37dcd6de6322fcdd/dbtplenarprotokoll_kommentiert-data.pdf).
 
 An excerpt from such an XML file:
-```xml=
+```xml
 <tagesordnungspunkt top-id="Tagesordnungspunkt 17">
   <p klasse="T_NaS">a) Beratung der Unterrichtung durch die Bundesregierung</p>
   <p klasse="T_fett">Die Hightech-Strategie 2025 – Forschung und Innovation für die Menschen</p>
@@ -70,7 +70,7 @@ We did this in the python script `parse_labelled_reden.py`.
 
 The speeches understandably arrive containing many obvious hints on the speakers' affiliation, e.g., "We as Democrats want to...". In order to force our model to actually look at speech's contens besides very obvious keywords, we first replace party names and corresponding synonyms with an `[UNK]` token as a preprocessing step. The following excerpt from the full preprocessing script `preprocess_speeches.py` illustrates this process.
 
-```python=
+```python
 # list of many synonyms, abbreviations, common phrases for the parties
 to_replace = [
     'AFD',
@@ -115,11 +115,9 @@ We embedded the model supplied by Huggingface into our own PyTorch Module `BertC
 
 To train the classifier, split our dataset into a 90% training set and 10% test set. As this is a multi-label classification problem, we used [Cross Entropy Loss](https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html) as loss function. As parties in the parliament have varying numbers of seats, they also get varying "speaking time" and therefore the dataset contains varying numbers of speeches per party. To address this, we set the class weights going into the Cross Entropy Loss according to
 
-$$
-weight(c) = min\left(10, \frac{max_i |S_i|}{|S_c|}\right),
-$$
+<img src="https://render.githubusercontent.com/render/math?math=weight(c) = min\left(10, \frac{max_i |S_i|}{|S_c|}\right)">
 
-where $c$ is a label and $S_c$ is the set of samples with the label $c$ in the dataset. The surrounding $min$ sets maximum weight, since the very underrepresented class label **fraktionslos** ("no affiliation") would otherwise get assigned an unthinkably high weight.
+where <img src="https://render.githubusercontent.com/render/math?math=c"> is a label and <img src="https://render.githubusercontent.com/render/math?math=S_c"> is the set of samples with the label <img src="https://render.githubusercontent.com/render/math?math=c"> in the dataset. The surrounding <img src="https://render.githubusercontent.com/render/math?math=min"> sets maximum weight, since the very underrepresented class label **fraktionslos** ("no affiliation") would otherwise get assigned an unthinkably high weight.
 
 
 For thematically grouping speeches, we used the Multilingual Universal Sentence Encoder (MUSE), which is available in TensorflowHub [here](https://tfhub.dev/google/universal-sentence-encoder-multilingual/3). We fed all our TOPs into this model and obtained thus a vector representation for each of them. When a user inputs a phrase corresponding to a political topic, e.g. "immigration law", we can feed this phrase into MUSE as well and then find the k closest TOP-representations using cosine similarity. All speeches corresponding to these TOPs are then considered semantically similar to the topic inputted by the user.
@@ -130,7 +128,7 @@ For thematically grouping speeches, we used the Multilingual Universal Sentence 
 
 ### a) Empirical Evaluation
 
-We use a confusion matrix as well as per class precision, recall and f1-score for evaluating the classification performance. These are our results after 3 epochs of training with a latent space dimension of 25. We used a learning rate of $5\cdot 10^{-5}$ and a value of epsilon of $10^{-8}$. 
+We use a confusion matrix as well as per class precision, recall and f1-score for evaluating the classification performance. These are our results after 3 epochs of training with a latent space dimension of 25. We used a learning rate of <img src="https://render.githubusercontent.com/render/math?math=5\cdot 10^{-5}"> and a value of epsilon of <img src="https://render.githubusercontent.com/render/math?math=10^{-8}">. 
 
 ```python
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
@@ -192,10 +190,10 @@ And finally, the "political left-to-right spectrum" has once again been matched 
 
 #### Finding TOPs corresponding to a certain topic
 
-We used the MUSE Sentence Encoder (from [here](https://tfhub.dev/google/universal-sentence-encoder-multilingual/3)) to map the TOPs to a vector representation. Then we can find the $k$ nearest neighbors of them given a user input. This is done using cosine similarity. Here are some examples of which TOPs are retrieved for a given user input:
+We used the MUSE Sentence Encoder (from [here](https://tfhub.dev/google/universal-sentence-encoder-multilingual/3)) to map the TOPs to a vector representation. Then we can find the <img src="https://render.githubusercontent.com/render/math?math=k"> nearest neighbors of them given a user input. This is done using cosine similarity. Here are some examples of which TOPs are retrieved for a given user input:
 
 User Input: **Ecological Agriculture**
-Raw german results (TOPs) for $k = 10$:
+Raw german results (TOPs) for <img src="https://render.githubusercontent.com/render/math?math=k = 10">:
 - Gesellschaftlichen Zusammenhalt stärken – Gutes Leben und Arbeiten auf dem Land gewährleisten Smart Farming – Flächendeckende Breitbandversorgung für eine innovative Landwirtschaft in Deutschland
 - hier: Einzelplan 10 Bundesministerium für Ernährung und Landwirtschaft
 - Einzelplan 10 Bundesministerium für Ernährung und Landwirtschaft
