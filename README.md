@@ -1,5 +1,6 @@
 # huBERTusHeil - Project for HPI-NLP ST21
-![](https://i.imgur.com/jYL3fX3.jpg =200x330)![](https://upload.wikimedia.org/wikipedia/commons/d/de/2020-07-02_Bundesminister_Hubertus_Heil_by_OlafKosinsky_MG_1922.jpg =330x330) 
+
+<img src="https://i.imgur.com/jYL3fX3.jpg" width="200" height="330"><img src="https://upload.wikimedia.org/wikipedia/commons/d/de/2020-07-02_Bundesminister_Hubertus_Heil_by_OlafKosinsky_MG_1922.jpg" width="330" height="330">
 
 > [Hubertus Heil](https://en.wikipedia.org/wiki/Hubertus_Heil) is a german politician and currently serving as Federal Minister of Labour and Social Affairs.
 
@@ -172,6 +173,7 @@ SPD and Union are commonly confused with each other. This is probably because th
 In the following figures, each dot represents one speech of the test dataset, its color the true label, i.e. affiliation.
 
 ![tSNE latent space of test set](https://i.imgur.com/1fmrL3H.png)
+
 Here, we have broken down the 25-dimensional vectors that the hidden layer of the classifier produces down to 2 dimensions using [tSNE](https://lvdmaaten.github.io/tsne/) with a perplexity parameter of 300.
 
 Content-wise, we can clearly see the horizontal border between governing coalition of SPD and Union (red and black) in the top and the opposition in the bottom. The governing parties are blending into each other, like one would expect for two parties in a coalition. This also illustrates the poor distinguishability of the two that we discussed earlier.
@@ -180,6 +182,7 @@ In the opposition part in the bottom, we can see that the AfD departs from the r
 
 
 We created the same plot for the entire dataset, i.e., including both training and test set.
+
 ![tSNE latent space on entire dataset](https://i.imgur.com/u8VeMOG.png)
 
 Keep in mind that during the training, the model "has seen" most of the samples 3 times, so naturally the boundaries are much more clear than just on the test set.
@@ -210,29 +213,29 @@ We have computed a PCA of our latent space when only considering speeches corres
 
 User Input: **Migration**
 
-![](https://i.imgur.com/fycZQ6H.png =400x300)
+<img src="https://i.imgur.com/fycZQ6H.png" width="400" height="300">
 
 Here we can see that the left and green parties (magenta and green) and also the AfD (blue) separate well from each other and from the other parties. This corresponds well to the fact that the AfD is the most restrictive party w.r.t. migration whereas the left and green parties are the least restrictive.
 
 User Input: **Weapon export**
 
-![](https://i.imgur.com/rdyJymO.png =400x300)
+<img src="https://i.imgur.com/rdyJymO.png" width="400" height="300">
 
 Here, "Die Linke" (magenta) is very well separated from the rest. This is because this party favours a strict ban of weapon exports in their program and often makes remarks about this in the parliament. 
 
 User Input: **Family**
 
-![](https://i.imgur.com/tvglxHf.png =400x300)
+<img src="https://i.imgur.com/tvglxHf.png" width="400" height="300">
 
 Here the government (black and red), the left party (magenta), AfD (blue) as well as a cluster consisting of FDP and the green party (yellow and green) separate well from each other. All the parties within one respective cluster do indeed have similar opinions on the broad topic "Family".
 
 User Input: **Climate Protection**
 
-![](https://i.imgur.com/T3Uv0iR.png =400x300)
+<img src="https://i.imgur.com/T3Uv0iR.png" width="400" height="300">
 
 We see that the green party and the AfD separate especially well from the Rest. This is backed by the fact that AfD denies climate change and does not favor climate protection whereas the green party has quite the opposite opinion and is very ambitious in this regard. 
 
-![](https://i.imgur.com/jaTMaK2.png =200x200)
+<img src="https://i.imgur.com/jaTMaK2.png" width="200" height="200">
 
 However, we can observe the rare case of *Die Linke* being near the governing parties in this case, which attributes to similar views and focus of these parties in that regard.
 
@@ -244,6 +247,7 @@ A prime example for an error we have seen oftentimes when experimenting with tha
 
 Query: **"Wir sollten sozial Schwache künftig deutlich stärker besteuern."** ("We should tax the poor much more in the future.")
 Answer:
+
 ![](https://i.imgur.com/CP0RALy.png)
 
 This is certainly not a statement that the *Linke* would make, quite the opposite. A common theme found in the party's program is higher taxation of wealthy people in order to help the poor. The same holds for the *SPD*, in the distribution on the second place.
@@ -254,10 +258,12 @@ Another example shows, that contradictory statements can lead to the exact same 
 
 Query: **Wir brauchen ein generelles Tempolimit auf den Autobahnen.** ("We need a general speed limit on highways.")
 Answer:
+
 ![](https://i.imgur.com/Uw0iCiY.png)
 
 Query: **Wir brauchen kein generelles Tempolimit auf den Autobahnen.** ("We need a general speed limit on highways.")
 Answer:
+
 ![](https://i.imgur.com/oDndfY9.png)
 
 
@@ -266,6 +272,7 @@ If we insert another word, however, that does not even change the meaning of the
 
 Query: **Wir brauchen kein generelles Tempolimit auf den deutschen Autobahnen.** ("We don't need a general speed limit on the german highways.")
 Answer:
+
 ![](https://i.imgur.com/sgAW4hg.png)
 
 Just by adding the adjective "german" to referring to the highways, we sway the model to decide that the input comes from the *AfD*, which arguably is often described as the most nationalistic party in the parliament.
@@ -280,6 +287,7 @@ When doing this kind of analysis, we need to keep in mind that the samples on wh
 
 For the last query we have measured SHAP values of tokens using the [`shap` library](https://shap.readthedocs.io/en/latest/index.html).
 To do this, we feed the measuring library the probability of a given class (here *AfD*) as observable score. Therefore, we can measure which tokens back the decision for the class and which ones counts against it.
+
 ![](https://i.imgur.com/Ll0Fukt.png)
 
 As we would expect, "deutschen" (adjective "german") is by far the most significant token for the decision for *AfD*. Interestingly, the personal pronoun "Wir" ("we") in the beginning of the sentence counts heavily against *AfD*, indicating the fact that they typically use different vocabulary for these kinds of statements.
