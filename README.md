@@ -14,19 +14,19 @@ Please find this document (which is more readable in the browser) and our source
 
 ### a) Goals
 
-We want to classify to which political party a speech from the german parliament (Bundestag) matches best. Based on all speeches from the Bundestag from the past election period, we trained a classifier that takes a raw speech as its input and predicts the corresponding party. For this we want to use a state-of-the-art deep neural network.
+We want to classify to which political party a given speech from the german parliament (Bundestag) matches best. Based on all speeches from the Bundestag from the past election period, we trained a classifier that takes a raw speech as its input and predicts the corresponding party. For this we want to use a state-of-the-art deep neural network.
 
-The objective of this classifier is to transform its input into a representation in a latent feature space which encodes the corresponding party. Speeches from the same or a similar party should then result in similar representations. We want to analyze and visiualize the learned representations of all speeches. Ideally, this would allow us to assess which parties have similar political positions or give similar speeches. We imagine that speeches of similar parties form overlapping clusters in the latent space whereas speeches from distinct parties from disjoint clusters.
+The objective of this classifier is to transform the input into a representation in a latent feature space which encodes the corresponding party. Speeches from the same or a similar party should then result in similar representations. We want to analyze and visualize the learned representations of all speeches. Ideally, this would allow us to assess which parties have similar political standpoints or give similar speeches. We imagine that speeches of similar parties form overlapping clusters in the latent space whereas clusters of very different parties are clearly distinguishable.
 
-When restraining inputs of the model to certain topics, such as e.g. immigration, environmental protection, tax policies, ..., we might even find out which parties have similar opinions on these topics by again analyzing the representations of these speeches and their overlaps in the latent space. 
+When narrowing inputs of the model to certain topics, such as e.g. immigration, environmental protection, tax policies, ..., we might even find out which parties have similar/differing opinions on these topics by again analyzing the representations of these speeches and their geometric distribution in the latent space.
 
 Thus, our goals are:
-- Train a precise classifier mapping a text to a party that would agree with this position
-- Find out how well the learned representations of this classifier represent similarities between the political parties 
+- Train a reasonably precise classifier mapping a text to a party that would agree with this position
+- Find out how well the learned representations of this classifier represent similarities between the political parties
 
 ### b) Data Preparation
 
-The federal german pariliament (Bundestag) [publishes](https://www.bundestag.de/services/opendata) protocols of its sessions as part of an open data initiative. Beginning with the current term, these are also offered in a [machine-readable XML format](https://www.bundestag.de/resource/blob/577234/f9159cee3e045cbc37dcd6de6322fcdd/dbtplenarprotokoll_kommentiert-data.pdf).
+The federal german pariliament (Bundestag) [publishes protocols of its sessions](https://www.bundestag.de/services/opendata) as part of an open data initiative. Beginning with the current term, these are also offered in a [machine-readable XML format](https://www.bundestag.de/resource/blob/577234/f9159cee3e045cbc37dcd6de6322fcdd/dbtplenarprotokoll_kommentiert-data.pdf).
 
 An excerpt from such an XML file:
 ```xml
@@ -60,15 +60,15 @@ An excerpt from such an XML file:
  </tagesordnungspunkt>
 ```
 
-To be able to build a model leveraging the available data source, we first needed to parse a few hundred of these XML files.
+To be able to build a model leveraging the available data source, we first had to parse a few hundred of these XML files.
 
-The XML documents contain a lot of information for a session, like lists of attending members, formal ID's ("Drucksachen") of the matters discussed, of course speeches and also comments ("kommentar" elements) that mark where applause was given and by whom.
+The XML documents contain a lot of information for a session, like lists of attending members, formal ID's ("Drucksachen") of the matters discussed, speeches (obviously) but also comments ("kommentar" elements) that mark where applause was given and by whom.
 
-For the purpose of our project, we restricted ourselves to each speech's content, the speaker, his party affiliation and the corresponding "discussion item" (Tagesordnungspunkt).
+For the purpose of our project, we restricted ourselves to the content of each speech, the speaker, his party affiliation and the corresponding "discussion item" (Tagesordnungspunkt).
 
 We did this in the python script `parse_labelled_reden.py`.
 
-The speeches understandably arrive containing many obvious hints on the speakers' affiliation, e.g., "We as Democrats want to...". In order to force our model to actually look at speech's contens besides very obvious keywords, we first replace party names and corresponding synonyms with an `[UNK]` token as a preprocessing step. The following excerpt from the full preprocessing script `preprocess_speeches.py` illustrates this process.
+The speeches understandably arrive containing many obvious hints on the speakers' affiliation, e.g., "We as Social Democrats want to...". In order to force our model to actually look at speech's contens besides very obvious keywords, we first replace party names and corresponding synonyms with an `[UNK]` token as a preprocessing step. The following excerpt from the full preprocessing script `preprocess_speeches.py` illustrates this process.
 
 ```python
 # list of many synonyms, abbreviations, common phrases for the parties
@@ -96,19 +96,25 @@ df = pd.read_csv('rede_fraktion.csv')
 
 for _, row in df.iterrows():
     row['text'] = e.sub('[UNK]', row['text'])
-    
+
 # (further cleansing, removing unicode escape sequences, etc.)
 
 df.to_csv('rede_fraktion_preprocessed.csv', index=False)
 ```
 
-In order to map speeches to a certain political topic, we use their corresponding "Tagesordnungspunkte" (TOPs) which are a (sometimes pretty complicated) description of the debate topic. We used a pretrained Sentence Encoder to map these descriptions to representation vectors that allowed us to find siutable TOPs and thus speeches given a keyword inputted by the user.
+In order to map speeches to a certain political topic, we use their corresponding "Tagesordnungspunkte" (TOPs) which are a (sometimes pretty complicated) description of the debate topic. One example of such a TOP (translated into english) is
+
+> Increase productivity, climate resilience and biodiversity - Promote agroforestry, Promote new planting of hedgerows as components of modern agroforestry systems, Recognise and promote agroforestry systems as a sustainable farming system, Make agroforestry feasible, Promote agroforestry systems comprehensively
+
+Because these TOPs contain very complicated german compounds and very specific terms (such as "Agroforestry"), we figured that traditional approaches such as Bag-of-Words vectors or TF-IDF vectors would not allow us assess their similarity very well.
+
+For that resason, we used a pretrained Sentence Encoder to map TOPs to representation vectors that allowed us to find suitable TOPs and thereby speeches corresponding to a political topic inputted by the user.
 
 ### c) System
 
-We construct our classifier by fine-tuning a BERT-Language Model pretrained on the german Wikipedia. We use the pretrained model included in Huggingface from [here](https://huggingface.co/bert-base-german-cased). This model also contains a tokenizer based on the WordPiece Algorithm.
+We construct our classifier by fine-tuning a BERT-Language Model pretrained on the german Wikipedia, news articles and OpenLegalData. We use the pretrained model included in Huggingface from [here](https://huggingface.co/bert-base-german-cased). This model also contains a tokenizer based on the WordPiece Algorithm.
 
-We embedded the model supplied by Huggingface into our own PyTorch Module `BertClassifier` (to be found in the notebook `huBERTusHeil.ipynb`), which additionally contains a classifier stage consisting of two Linear layers and an ReLU activation and BatchNorm inbetween them. When classifying, the first linear layer takes the last hidden state of the BERT model and translates it into an 25-dimensional (50-dimensional) vector, which is intended to represent features of the speech like topic, opinion, tone and other features. The second linear layer then translates it into an 7-dimensional vector, which is the final output corresponding to the 7 different labels we try to predict (*AfD*, *B90/Die Grünen*, *FDP*, *Die Linke*, *SPD*, *CDU/CSU* and *no affiliation*). The following figure illustrates our model architecture.
+We embedded the model supplied by Huggingface into our own PyTorch Module `BertClassifier` (to be found in the notebook `huBERTusHeil.ipynb`), which additionally contains a classifier stage consisting of two Linear layers as well as an ReLU activation and a BatchNorm inbetween them. When classifying, the first linear layer takes the last hidden state of the BERT model and translates it into an 25-dimensional (50-dimensional) vector, which is intended to represent features of the speech like topic, opinion, vocabulary and other features. The second linear layer then translates it into an 7-dimensional vector, which is the final output corresponding to the 7 different labels we try to predict (*AfD*, *B90/Die Grünen*, *FDP*, *Die Linke*, *SPD*, *Union* and *no affiliation*). The following figure illustrates our model architecture.
 
 ![](https://i.imgur.com/vSDKfcT.png)
 
@@ -120,7 +126,7 @@ To train the classifier, split our dataset into a 90% training set and 10% test 
 where <img src="https://render.githubusercontent.com/render/math?math=c"> is a label and <img src="https://render.githubusercontent.com/render/math?math=S_c"> is the set of samples with the label <img src="https://render.githubusercontent.com/render/math?math=c"> in the dataset. The surrounding <img src="https://render.githubusercontent.com/render/math?math=min"> sets maximum weight, since the very underrepresented class label **fraktionslos** ("no affiliation") would otherwise get assigned an unthinkably high weight.
 
 
-For thematically grouping speeches, we used the Multilingual Universal Sentence Encoder (MUSE), which is available in TensorflowHub [here](https://tfhub.dev/google/universal-sentence-encoder-multilingual/3). We fed all our TOPs into this model and obtained thus a vector representation for each of them. When a user inputs a phrase corresponding to a political topic, e.g. "immigration law", we can feed this phrase into MUSE as well and then find the k closest TOP-representations using cosine similarity. All speeches corresponding to these TOPs are then considered semantically similar to the topic inputted by the user.
+For thematically grouping speeches based on the corresponding TOPs, we used the Multilingual Universal Sentence Encoder (MUSE), which is available on TensorflowHub [here](https://tfhub.dev/google/universal-sentence-encoder-multilingual/3). We fed all our TOPs into this model and obtained thus a vector representation for each of them. When a user inputs a phrase corresponding to a political topic, e.g. "immigration law", we can feed this phrase into MUSE as well and then find the k closest TOP-representations measured by cosine similarity. All speeches corresponding to these TOPs are then considered semantically similar to the topic inputted by the user. We observed that MUSE does have difficulties at reliably encoding the meaning of very short TOPs. Therefore, we removed those of them that constist of 6 words or less. This improved our search results. You can take a look at our notebook `Tagesordnungspunkte.ipynb` for futher details.
 
 
 
@@ -128,7 +134,7 @@ For thematically grouping speeches, we used the Multilingual Universal Sentence 
 
 ### a) Empirical Evaluation
 
-We use a confusion matrix as well as per class precision, recall and f1-score for evaluating the classification performance. These are our results after 3 epochs of training with a latent space dimension of 25. We used a learning rate of <img src="https://render.githubusercontent.com/render/math?math=5\cdot 10^{-5}"> and a value of epsilon of <img src="https://render.githubusercontent.com/render/math?math=10^{-8}">. 
+We use a confusion matrix as well as per class precision, recall and f1-score for evaluating the classification performance. These are our results after 3 epochs of training with a latent space dimension of 25. We used a learning rate of <img src="https://render.githubusercontent.com/render/math?math=5\cdot 10^{-5}"> and a value of epsilon of <img src="https://render.githubusercontent.com/render/math?math=10^{-8}">.
 
 ```python
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
@@ -259,21 +265,21 @@ Answer:
 
 ![](https://i.imgur.com/Uw0iCiY.png)
 
-Query: **Wir brauchen kein generelles Tempolimit auf den Autobahnen.** ("We need a general speed limit on highways.")<br/>
+Query: **Wir brauchen *kein* generelles Tempolimit auf den Autobahnen.** ("We *don't* need a general speed limit on highways.")
 Answer:
 
 ![](https://i.imgur.com/oDndfY9.png)
 
 
-If we insert another word, however, that does not even change the meaning of the query, we can get another decision.
+If we insert another word, however, that does not even change the meaning of the statement, we can get another decision.
 
 
-Query: **Wir brauchen kein generelles Tempolimit auf den deutschen Autobahnen.** ("We don't need a general speed limit on the german highways.")<br/>
+Query: **Wir brauchen kein generelles Tempolimit auf den *deutschen* Autobahnen.** ("We don't need a general speed limit on the *german* highways.")
 Answer:
 
 ![](https://i.imgur.com/sgAW4hg.png)
 
-Just by adding the adjective "german" to referring to the highways, we sway the model to decide that the input comes from the *AfD*, which arguably is often described as the most nationalistic party in the parliament.
+Just by adding the adjective "german" referring to the highways, we sway the model to decide that the input comes from the *AfD*, which arguably is often described as the most nationalistic party in the parliament.
 
 This backs our claim that vocabulary could matter more than the actual meaning of the input for the task at hand, i.e., classifying speeches by party.
 
@@ -284,17 +290,17 @@ When doing this kind of analysis, we need to keep in mind that the samples on wh
 ### Explainability with SHAP values
 
 For the last query we have measured SHAP values of tokens using the [`shap` library](https://shap.readthedocs.io/en/latest/index.html).
-To do this, we feed the measuring library the probability of a given class (here *AfD*) as observable score. Therefore, we can measure which tokens back the decision for the class and which ones counts against it.
+To do this, we feed the measuring library the probability of a given class (here *AfD*) as observable score. Therefore, we can measure for each token which impact it has on the decision and what its magnitude is.
 
 ![](https://i.imgur.com/Ll0Fukt.png)
 
-As we would expect, "deutschen" (adjective "german") is by far the most significant token for the decision for *AfD*. Interestingly, the personal pronoun "Wir" ("we") in the beginning of the sentence counts heavily against *AfD*, indicating the fact that they typically use different vocabulary for these kinds of statements.
+As we would expect, "deutschen" (adjective "german") is by far the most significant token for the decision for *AfD*. Interestingly, the personal pronoun "Wir" ("we") in the beginning of the sentence counts heavily against *AfD*, maybe indicating that they typically use different vocabulary for these kinds of statements.
 
 ### Similarities of Parties
 
-Sometimes, parties with similar opinions on a certain topic are not necessarily grouped into similar clusters in latent space. Our model just has the objective of separating political parties from each other. Although it  works quite well in separating parties with very *different* views on a specific topic, it does not recognize similarities very well. 
+Sometimes, parties with similar opinions on a certain topic are not necessarily grouped into similar clusters in latent space. Our model just has the objective of separating political parties from each other. Although it  works quite well in separating parties with very *different* views on a specific topic, it does not recognize similarities very well.
 
-Sometimes our search for matching TOPs given a certain topic is also not working too well. It happens that unrelated TOPs or simply TOPs completely devoid of content pop up in certain searches. For example, we encountered the TOPs "Organ Donation" or simply "Letter a, b and c" when searching for "Speed Limit". We observed that this is especiallu the case for very short TOPs and therefore removed TOPs that consisted of 6 words or less. This did improve our search results.
+Sometimes our search for matching TOPs given a certain topic based on their MUSE-Representations is also not working too well. It happens that unrelated TOPs or simply TOPs completely devoid of content pop up in certain searches. For example, we encountered the TOPs "Organ Donation" or simply "Letter a, b and c" when searching for "Speed Limit". We observed that this is especially the case for very short TOPs and therefore removed TOPs that consisted of 6 words or less. This did improve our search results.
 
 ## Discussion
 
@@ -304,28 +310,28 @@ Sometimes our search for matching TOPs given a certain topic is also not working
 
 Our model was able to discriminate parties from each other quite well. Especially the "extremes" could be adequately distinguished from the rest, which we attribute to the fact that they use more memorable and exclusive vocabulary, which clearly sets them apart from other parties.
 
-We could have further improved classification accuracy by, e.g., choosing a higher dimensionality of the latent space because that would allow the model to encode more information into the latent space. However, we did not do this since it would have made it more difficult to recognize relationships between the political parties. We have actually trained a model with a latent space of 50 dimensions, which did indeed not capture these releationships very well but had a higher classification accuracy. 
+We could have further improved classification accuracy by, e.g., choosing a higher dimensionality of the latent space because that would allow the model to encode more information into the latent space. However, we did not do this since it would have made it more difficult to recognize relationships between the political parties. We have actually trained a model with a latent space of 50 dimensions, which did indeed not capture these releationships very well but had a higher classification accuracy.
 
 #### Latent Space Analysis
 
-We could observe that the model does distinguish speeches from the government very well from those of the opposition. We did not look more deeply into this in particular, however, it is likely that goverment parties are commonly talking about what they have done (using phrases like, e.g. "we introduced this new law...") than opposition parties do, which makes it easier to tell these two party "types" apart.
+We could observe that the model does distinguish speeches from the government very well from those of the opposition. We did not look more deeply into this in particular, however, it is likely that goverment parties are commonly talking about what they have done (using phrases like, e.g. "we introduced this new law...") than opposition parties do, which makes it easier to tell these two "party types" apart.
 
 Distinct parties do indeed form clusters in latent space that do in some sense represent the relationships between them. More extreme parties correspond to clusters far from the other parties whereas the moderate parties correspond slightly overlapping clusters.
 
 When analyzing only speeches that concern a certain topic, we can see that the latent space represents which parties have the largest disagreements on this specific topic.
 
-However, similarities between parties are not captured very well and the overall structure of the latent space remains largely the same for all topics. That is, governing parties are always percieved as very similar and the opposition and extreme parties are usually separated from the government. 
+However, similarities between parties are not captured very well and the overall structure of the latent space remains largely the same for all topics. That is, governing parties are always percieved as very similar and the opposition and extreme parties are usually separated from the government.
 
 The model does not really follow the objective of mapping similar parties to similar representations in the latent space. It is rather trained with the objective of *distinguishing* parties instead of representing their relationships. Although we could observe that some relationships between parties are encoded in the latent space, there are certainly better ways of forcing the model to recognize them (See next section for some ideas on that). 
 
 ### b) Future Prospects
 
-In the future, looking into the extraction of the "applause" features and using them as different kind of label for training like we mentioned earlier could be an effective way of improving the model's capture of party similarities. We would then train a multiclass-classifier on our data that aims to predict all parties that applaud a given speech. That way, it is explicitly forced that the model learns content-related relationships between parties and encodes them into the latent space.
+In the future, looking into the extraction of the "applause" features and using them as different kind of label for training like we mentioned earlier could be an effective way of improving the model's capture of party similarities. We would then train a multiclass-classifier on our data that aims to predict all parties that applaud a given speech. That way, we would enforce that the model learns content-related relationships between parties and encodes them into the latent space.
 
 Furthermore, we think that given enough time, one could find a better way to "cluster" TOPs surrounding a particular topic for the purpose of analyzing party similarities in that particular context. This could be achieved by manually assigning keywords to clusters pre-built by leveraging an automatic approach like the sentence embeddings that we already used.
 
-We did try to form clusters in the latent space formed by the sentence embeddings of all TOPs. We did so by using the Agglomerative Clustering algorihm with cosine similarity and average linkage from sklearn (see e.g. [here](https://scikit-learn.org/stable/auto_examples/cluster/plot_agglomerative_clustering_metrics.html)). However, these custers were not always coherent with a specific political topic. We observed that finding the neares neighbors given a user input worked better for our puroposes.
+We did try to form clusters in the latent space formed by the sentence embeddings of all TOPs. We did so by using the Agglomerative Clustering algorithm with cosine similarity and average linkage from `sklearn` (see e.g. [here](https://scikit-learn.org/stable/auto_examples/cluster/plot_agglomerative_clustering_metrics.html)). However, these clusters were not always coherent with a specific political topic. We observed that finding the nearest neighbors given a user input worked better for our puroposes.
 
 When having assigned thematical labels to speeches, we could also profit from letting the model classify the topics a speech corresponds to. Then, the embeddings in the latent space would contain not only features describing the party affiliation of the speech but also features describing what the speech is about.
 
-Although the data source is great, we could only look at the last four years of parliament sessions since the Bundestag began just in 2017 to publish the protocols in the XML format. Certainly, it would be very interesting to see the same analysis for example for a legislature period in which different coalition forms the government. We would certainly like to see a similar "blending" of the governing parties and general distinguishability from the opposition, once again, to confirm our explanation of this observation. Looking at current voter surveys and given that the current governing coalition may not reach a quorum in September, it seems likely that we can repeat this analysis in a few years with a different governing coalition.
+Although the data source is great, we could only look at the last four years of parliament sessions since the Bundestag began just in 2017 to publish the protocols in the XML format. Certainly, it would be very interesting to see the same analysis for example for a legislature period in which a different coalition forms the government. We would certainly like to see a similar "blending" of the governing parties and general distinguishability from the opposition once again, to validate our explanation of this observation. Looking at current voter surveys and given that the current governing coalition probably will fail to reach a quorum in September election, it seems likely that we can repeat this analysis in a few years with a different governing coalition.
